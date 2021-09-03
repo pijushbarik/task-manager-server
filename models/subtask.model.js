@@ -2,18 +2,22 @@ const mongoose = require('mongoose');
 const toJSON = require('./plugins/toJSON.plugin');
 
 const subtaskSchema = mongoose.Schema(
-	{
-		title: {
-			type: String,
-			required: true,
-			trim: true,
-		},
-		status: {
-			type: String,
-			required: true,
-			enum: ["todo", "in_progress", "completed"],
-			default: "todo"
-		},
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: ['todo', 'in_progress', 'completed'],
+      default: 'todo',
+    },
+    order: {
+      type: Number,
+      required: true,
+    },
   },
   {
     timestamps: true,

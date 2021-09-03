@@ -3,23 +3,23 @@ const { objectId } = require('./custom.validation');
 
 const createSubtask = {
   params: Joi.object().keys({
-    taskId: Joi.string().custom(objectId)
+    taskId: Joi.string().custom(objectId),
   }),
   body: Joi.object().keys({
     title: Joi.string().required(),
-  })
+  }),
 };
 
 const getSubtasks = {
   params: {
-    taskId: Joi.string().custom(objectId)
-  }
+    taskId: Joi.string().custom(objectId),
+  },
 };
 
 const getSubtask = {
   params: Joi.object().keys({
     taskId: Joi.string().custom(objectId),
-    subtaskId: Joi.string().custom(objectId)
+    subtaskId: Joi.string().custom(objectId),
   }),
 };
 
@@ -29,9 +29,10 @@ const updateSubtask = {
     subtaskId: Joi.required().custom(objectId),
   }),
   body: Joi.object()
-		.keys({
+    .keys({
       title: Joi.string(),
-      status: Joi.string().valid("todo", "in_progress", "completed")
+      status: Joi.string().valid('todo', 'in_progress', 'completed'),
+      order: Joi.number().greater(-1),
     })
     .min(1),
 };

@@ -3,7 +3,7 @@ const { objectId } = require('./custom.validation');
 
 const createTask = {
   body: Joi.object().keys({
-		title: Joi.string().required(),
+    title: Joi.string().required(),
   }),
 };
 
@@ -20,9 +20,10 @@ const updateTask = {
     taskId: Joi.required().custom(objectId),
   }),
   body: Joi.object()
-		.keys({
+    .keys({
       title: Joi.string(),
-      status: Joi.string().valid("todo", "in_progress", "completed")
+      status: Joi.string().valid('todo', 'in_progress', 'completed'),
+      order: Joi.number().greater(-1),
     })
     .min(1),
 };
