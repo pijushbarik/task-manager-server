@@ -2,11 +2,24 @@ const mongoose = require('mongoose');
 const app = require('./app');
 const config = require('./config/config');
 const logger = require('./config/logger');
+const http = require('http');
+const { Server: SocketServer } = require('socket.io');
+const socketController = require('./controllers/socket');
 
-let server;
+const server = http.createServer(app);
+
 mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
   logger.info('Connected to MongoDB');
-  server = app.listen(config.port, () => {
+
+  const io = new SocketServer(server, {
+    cors: {
+      origin: '*',
+    },
+  });
+
+  io.on('connection', socketController);
+
+  server.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`);
   });
 });
