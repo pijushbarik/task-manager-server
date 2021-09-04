@@ -15,9 +15,21 @@ const createTask = async (taskBody) => {
 };
 
 const queryTasks = async () => {
-  const tasks = await Task.find().sort('order').exec();
-  tasks.forEach((t) => t.subtasks.sort((a, b) => a.order - b.order));
-  return tasks;
+  const [tasksTodo, tasksInProgress, tasksCompleted] = await Promise.all([
+    Task.find({ status: 'todo' }).sort('order').exec(),
+    Task.find({ status: 'in_progress' }).sort('order').exec(),
+    Task.find({ status: 'completed' }).sort('order').exec(),
+  ]);
+
+  tasksTodo.forEach((t) => t.subtasks.sort((a, b) => a.order - b.order));
+  tasksInProgress.forEach((t) => t.subtasks.sort((a, b) => a.order - b.order));
+  tasksCompleted.forEach((t) => t.subtasks.sort((a, b) => a.order - b.order));
+
+  return {
+    todo: tasksTodo,
+    in_progress: tasksInProgress,
+    completed: tasksCompleted,
+  };
 };
 
 const getTaskById = async (id) => {
@@ -32,23 +44,39 @@ const updateTaskById = async (taskId, updateBody) => {
 
   if (typeof updateBody.order === 'number') {
     const newOrder = updateBody.order;
-    const currentOrder = task.order;
 
-    await Task.updateMany(
-      {
-        id: { $ne: task.id },
-        order:
-          newOrder < currentOrder
-            ? { $gte: newOrder, $lt: currentOrder }
-            : { $lte: newOrder, $gt: currentOrder },
-        status: task.status,
-      },
-      {
-        $inc: {
-          order: newOrder < currentOrder ? 1 : -1,
+    if (updateBody.status) {
+      await Task.updateMany(
+        {
+          id: { $ne: task.id },
+          order: { $gte: newOrder },
+          status: updateBody.status,
         },
-      }
-    );
+        {
+          $inc: {
+            order: 1,
+          },
+        }
+      );
+    } else {
+      const currentOrder = task.order;
+
+      await Task.updateMany(
+        {
+          id: { $ne: task.id },
+          order:
+            newOrder < currentOrder
+              ? { $gte: newOrder, $lt: currentOrder }
+              : { $lte: newOrder, $gt: currentOrder },
+          status: task.status,
+        },
+        {
+          $inc: {
+            order: newOrder < currentOrder ? 1 : -1,
+          },
+        }
+      );
+    }
   }
 
   Object.assign(task, updateBody);

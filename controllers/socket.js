@@ -3,36 +3,58 @@ const taskService = require('../services/task.service');
 const subtaskService = require('../services/subtask.service');
 
 const socketController = catchAsync(async (socket) => {
-  const tasks = await taskService.queryTasks();
-  socket.emit('newData', tasks);
+  const emitPartialDataUpdate = (data) => {
+    socket.emit('partialDataUpdate', data);
+    socket.broadcast.emit('partialDataUpdate', data);
+  };
+
+  socket.on(
+    'getTasks',
+    catchAsync(async () => {
+      const tasks = await taskService.queryTasks();
+      socket.emit('newData', tasks);
+    })
+  );
 
   socket.on(
     'createTask',
     catchAsync(async (data) => {
-      await taskService.createTask(data);
-      const tasks = await taskService.queryTasks();
-      socket.emit('newData', tasks);
-      socket.broadcast.emit('newData', tasks);
+      const task = await taskService.createTask(data);
+      emitPartialDataUpdate({
+        type: 'CREATE_TASK',
+        status: task.status,
+        order: task.order,
+        id: task.id,
+        task,
+      });
     })
   );
 
   socket.on(
     'updateTask',
     catchAsync(async (data) => {
-      await taskService.updateTaskById(data.id, data.updateBody);
-      const tasks = await taskService.queryTasks();
-      socket.emit('newData', tasks);
-      socket.broadcast.emit('newData', tasks);
+      const task = await taskService.updateTaskById(data.id, data.updateBody);
+      emitPartialDataUpdate({
+        type: 'UPDATE_TASK',
+        status: task.status,
+        order: task.order,
+        id: task.id,
+        task,
+      });
     })
   );
 
   socket.on(
     'deleteTask',
     catchAsync(async (data) => {
-      await taskService.deleteTaskById(data.id);
-      const tasks = await taskService.queryTasks();
-      socket.emit('newData', tasks);
-      socket.broadcast.emit('newData', tasks);
+      const task = await taskService.deleteTaskById(data.id);
+      emitPartialDataUpdate({
+        type: 'DELETE_TASK',
+        status: task.status,
+        order: task.order,
+        id: task.id,
+        task,
+      });
     })
   );
 
