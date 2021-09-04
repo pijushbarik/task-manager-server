@@ -19,7 +19,7 @@ const socketController = catchAsync(async (socket) => {
   socket.on(
     'createTask',
     catchAsync(async (data) => {
-      const task = await taskService.createTask(data);
+      const task = await taskService.createTask(data, true);
       emitPartialDataUpdate({
         type: 'CREATE_TASK',
         status: task.status,
@@ -61,34 +61,61 @@ const socketController = catchAsync(async (socket) => {
   socket.on(
     'createSubtask',
     catchAsync(async (data) => {
-      await subtaskService.createSubtask(data.taskId, data.body);
-      const tasks = await taskService.queryTasks();
-      socket.emit('newData', tasks);
-      socket.broadcast.emit('newData', tasks);
+      const [task, subtask] = await Promise.all([
+        taskService.getTaskById(data.taskId),
+        subtaskService.createSubtask(data.taskId, data.body),
+      ]);
+      emitPartialDataUpdate({
+        type: 'CREATE_SUBTASK',
+        subtaskStatus: subtask.status,
+        status: task.status,
+        order: subtask.order,
+        id: subtask.id,
+        taskId: task.id,
+        subtask,
+      });
     })
   );
 
   socket.on(
     'updateSubtask',
     catchAsync(async (data) => {
-      await subtaskService.updateSubtaskById(
-        data.taskId,
-        data.subtaskId,
-        data.updateBody
-      );
-      const tasks = await taskService.queryTasks();
-      socket.emit('newData', tasks);
-      socket.broadcast.emit('newData', tasks);
+      const [task, subtask] = await Promise.all([
+        taskService.getTaskById(data.taskId),
+        subtaskService.updateSubtaskById(
+          data.taskId,
+          data.subtaskId,
+          data.updateBody
+        ),
+      ]);
+      emitPartialDataUpdate({
+        type: 'UPDATE_SUBTASK',
+        subtaskStatus: subtask.status,
+        status: task.status,
+        order: subtask.order,
+        id: subtask.id,
+        taskId: task.id,
+        subtask,
+      });
     })
   );
 
   socket.on(
     'deleteSubtask',
     catchAsync(async (data) => {
-      await subtaskService.deleteSubtaskById(data.taskId, data.subtaskId);
-      const tasks = await taskService.queryTasks();
-      socket.emit('newData', tasks);
-      socket.broadcast.emit('newData', tasks);
+      const [task, subtask] = await Promise.all([
+        taskService.getTaskById(data.taskId),
+        subtaskService.deleteSubtaskById(data.taskId, data.subtaskId),
+      ]);
+      emitPartialDataUpdate({
+        type: 'DELETE_SUBTASK',
+        subtaskStatus: subtask.status,
+        status: task.status,
+        order: subtask.order,
+        id: subtask.id,
+        taskId: task.id,
+        subtask,
+      });
     })
   );
 });
