@@ -4,8 +4,11 @@ const subtaskService = require('../services/subtask.service');
 
 const socketController = catchAsync(async (socket) => {
   const emitPartialDataUpdate = (data) => {
-    socket.emit('partialDataUpdate', data);
-    socket.broadcast.emit('partialDataUpdate', data);
+    socket.emit('partialDataUpdate', { ...data, updatedByOthers: false });
+    socket.broadcast.emit('partialDataUpdate', {
+      ...data,
+      updatedByOthers: true,
+    });
   };
 
   socket.on(
